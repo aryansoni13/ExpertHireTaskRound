@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /stories/{storyId} {
+      allow read: if resource.data.status == 'published';
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+
+    match /stories/{storyId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+
+    match /userReactions/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /amplifies/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+
+    match /jobs/{jobId} {
+      allow read: if resource.data.status == "active";
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == resource.data.postedBy;
+    }
+
+    match /forums/{threadId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+
+    match /forums/{threadId}/replies/{replyId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+
+    match /forumReplyLikes/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /polls/{pollId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+
+    match /pollVotes/{docId} {
+      allow read, write: if request.auth != null;
+    }

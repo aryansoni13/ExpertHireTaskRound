@@ -14,6 +14,53 @@
 
 ---
 
+## 🏗️ System Architecture
+
+HerVoice follows a modern decoupled architecture, combining the performance of Next.js 14 with the real-time capabilities of Firebase v10.
+
+```mermaid
+graph TD
+    subgraph Frontend ["Client Layer (Next.js 14)"]
+        UI["UI Components (Tailwind + Framer Motion)"]
+        State["State Mgmt (Zustand)"]
+        Hooks["Real-time Sync Hooks (onSnapshot)"]
+        ClientLib["Firestore Client Lib (lib/firestore.ts)"]
+
+        UI --> State
+        UI --> Hooks
+        Hooks --> ClientLib
+    end
+
+    subgraph Resilience ["Resilience Layer"]
+        ErrorHandler["Error Interceptor"]
+        MockData["Mock Data Library (lib/mockData.ts)"]
+
+        ClientLib --> ErrorHandler
+        ErrorHandler -- "Fallthrough on Database Error" --> MockData
+    end
+
+    subgraph Backend ["Persistence Layer (Firebase)"]
+        FireStore[("Cloud Firestore")]
+        Auth["Firebase Auth"]
+        Rules["Security Rules"]
+
+        ErrorHandler -- "Primary Stream" --> FireStore
+        FireStore --- Rules
+    end
+
+    UI --> Auth
+```
+
+### 🛡️ "Bulletproof" Demo Mode
+
+The platform features a custom resilience layer that ensures a 100% stable experience even if the database is unreachable or permissions are restricted:
+
+- **Graceful Fallbacks**: Every data fetch operation is wrapped in an interceptor that serves high-quality mock data if the Firestore connection fails.
+- **Optimistic Interactions**: Write operations (reactions, votes, job posts) are "faked" if the database is locked, allowing users to see success notifications and UI updates without backend dependencies.
+- **Stable Initialization**: A centralized initialization pattern in `lib/firebase.ts` prevents instance conflicts across the App Router.
+
+---
+
 ## Getting Started
 
 ### 1. Clone & Install
@@ -43,6 +90,7 @@ cp .env.local.example .env.local
 ```
 
 **For Firebase Admin SDK:**
+
 1. Go to Project Settings → Service Accounts
 2. Click "Generate new private key"
 3. Copy `client_email` and `private_key` into your `.env.local`
@@ -166,7 +214,7 @@ stories/
     - amplifyCount: number
     - createdAt: Timestamp
     - reactions: { HEART: number, FIRE: number, STRONG: number, HUG: number }
-    
+
     comments/
       {commentId}/
         - content: string
@@ -223,7 +271,7 @@ Make sure `FIREBASE_ADMIN_PRIVATE_KEY` is properly escaped with `\n` for newline
 ## Features
 
 - 🔐 **Anonymous by default** — no names or photos ever shown
-- ✍️ **Multi-step story form** — with auto-save draft in localStorage  
+- ✍️ **Multi-step story form** — with auto-save draft in localStorage
 - 🧠 **Auto sentiment detection** — keyword-based tagging (no AI API)
 - ⚡ **Real-time reactions & comments** — via Firestore onSnapshot
 - 🔥 **Amplify system** — one-time boost per story per user
